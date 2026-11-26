@@ -1,0 +1,158 @@
+﻿name: Sync Upstream & Build Custom Release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      sync_upstream:
+        description: 'Sync upstream onlymash/IsekaiPlayer master and rebase this branch before building'
+        type: boolean
+        default: true
+      abi:
+        description: 'Target Android ABI'
+        type: choice
+        default: 'arm64'
+        options:
+          - 'arm64'
+          - '64'
+          - 'all'
+  push:
+    branches: [ my-custom ]
+  # Uncomment below if you want to auto-check upstream every week (Mondays 02:00 UTC)
+  # schedule:
+  #   - cron: '0 2 * * 1'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Sync & Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync upstream and rebase custom branch
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.sync_upstream) }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git remote add upstream https://github.com/onlymash/IsekaiPlayer.git || git remote set-url upstream https://github.com/onlymash/IsekaiPlayer.git
+          git fetch upstream master
+
+          BEFORE_SHA=$(git rev-parse HEAD)
+          if ! git rebase upstream/master; then
+            echo "::error::Rebase conflict detected against upstream/master. Please resolve conflicts locally or in Antigravity and push again."
+            git rebase --abort || true
+            exit 1
+          fi
+
+          AFTER_SHA=$(git rev-parse HEAD)
+          if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
+            git push --force-with-lease origin "HEAD:${GITHUB_REF_NAME}"
+            echo "Synced and rebased onto latest upstream/master."
+          else
+            echo "Already up to date with upstream/master."
+          fi
+
+      - name: Read toolchain versions from config.versions.toml
+        id: versions
+        run: |
+          JDK_VERSION=$(grep -E '^jdk\s*=' gradle/config.versions.toml | cut -d'"' -f2)
+          NDK_VERSION=$(grep -E '^android-ndk\s*=' gradle/config.versions.toml | cut -d'"' -f2)
+          echo "jdk=${JDK_VERSION:-25}" >> "$GITHUB_OUTPUT"
+          echo "ndk=${NDK_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ steps.versions.outputs.jdk }}
+
+      - name: Setup Android SDK & NDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools ndk;${{ steps.versions.outputs.ndk }}"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
+
+      - name: Cache Prebuilt Native Libraries (.so)
+        id: cache-prebuilt
+        uses: actions/cache@v4
+        with:
+          path: external/prebuilt/
+          key: prebuilt-so-${{ runner.os }}-${{ inputs.abi || 'arm64' }}-${{ hashFiles('scripts/versions.sh', 'gradle/config.versions.toml') }}
+
+      - name: Install Host Build Tools
+        if: steps.cache-prebuilt.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            pkg-config \
+            autoconf \
+            automake \
+            libtool \
+            gperf \
+            yasm \
+            nasm \
+            python3-pip \
+            python3-setuptools \
+            python3-wheel
+          pip3 install --upgrade --break-system-packages meson
+
+      - name: Sync Native Sources & Build Native Libraries
+        if: steps.cache-prebuilt.outputs.cache-hit != 'true'
+        run: |
+          chmod +x scripts/*.sh scripts/components/*.sh
+          ./scripts/sync-sources.sh --fast
+          ./scripts/build-native.sh "${{ inputs.abi || 'arm64' }}" all
+
+      - name: Configure Release Signing (Optional via GitHub Secrets)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
+            SIGN_DIR="/tmp/release-signing"
+            mkdir -p "$SIGN_DIR" keystore/release
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$SIGN_DIR/release.jks"
+            cat > "$SIGN_DIR/signing.properties" <<EOF
+          storeFile=$SIGN_DIR/release.jks
+          keyAlias=$KEY_ALIAS
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}
+          EOF
+            echo "$SIGN_DIR/signing.properties" > keystore/release/path.txt
+            echo "Release signing configured from GitHub Secrets."
+          else
+            echo "No release signing secrets configured; Gradle will fall back to built-in debug keystore."
+          fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew test
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload Release APK Artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: IsekaiPlayer-release-${{ inputs.abi || 'arm64' }}
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 30

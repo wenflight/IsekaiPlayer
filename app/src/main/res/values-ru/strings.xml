@@ -73,6 +73,8 @@
     <string name="settings_gestures_header_tap">Касания</string>
     <string name="settings_gestures_horizontal_drag">Перемотка</string>
     <string name="settings_gestures_horizontal_drag_summary">Горизонтальный свайп для изменения позиции воспроизведения</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity">Чувствительность перемотки</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity_summary">Настройте скорость перемотки при горизонтальном свайпе</string>
     <string name="settings_gestures_vertical_drag_volume">Громкость</string>
     <string name="settings_gestures_vertical_drag_volume_summary">Вертикальный свайп в левой части экрана для регулировки громкости</string>
     <string name="settings_gestures_vertical_drag_brightness">Яркость</string>
@@ -395,6 +397,11 @@
     <string name="settings_audio_header_mpv">Звук mpv</string>
     <string name="settings_audio_request_focus">Запрашивать аудиофокус</string>
     <string name="settings_audio_request_focus_summary">Приостанавливать видео, когда другие приложения воспроизводят звук</string>
+    <string name="settings_audio_focus_behavior">Поведение при прерываниях</string>
+    <string name="settings_audio_focus_behavior_summary">Выберите реакцию плеера на уведомления и другие звуковые прерывания</string>
+    <string name="settings_audio_focus_behavior_pause">Пауза</string>
+    <string name="settings_audio_focus_behavior_do_not_pause">Не ставить</string>
+    <string name="settings_audio_focus_behavior_pause_and_resume">Продолжить</string>
     <string name="settings_audio_enable_background_audio">Фоновое воспроизведение</string>
     <string name="settings_audio_enable_background_audio_summary">Продолжать воспроизведение звука при сворачивании приложения</string>
     <string name="settings_audio_exo_volume">Громкость плеера</string>

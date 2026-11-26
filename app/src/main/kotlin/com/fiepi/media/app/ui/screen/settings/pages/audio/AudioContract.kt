@@ -18,9 +18,12 @@
 
 package com.fiepi.media.app.ui.screen.settings.pages.audio
 
+import com.fiepi.media.domain.model.preferences.AudioFocusBehavior
+
 sealed class AudioPrefsIntent {
     data class SetSearchQuery(val query: String) : AudioPrefsIntent()
     data class ToggleRequestAudioFocus(val enabled: Boolean) : AudioPrefsIntent()
+    data class UpdateAudioFocusBehavior(val behavior: AudioFocusBehavior) : AudioPrefsIntent()
     data class ToggleBackgroundAudio(val enabled: Boolean) : AudioPrefsIntent()
     data class UpdatePreferredAudioLanguages(val languages: List<String>) : AudioPrefsIntent()
     data class UpdateAudioOutputBackends(val backends: List<String>) : AudioPrefsIntent()

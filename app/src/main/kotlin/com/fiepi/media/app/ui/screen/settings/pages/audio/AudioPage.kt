@@ -30,6 +30,7 @@ import androidx.compose.material.icons.twotone.Compress
 import androidx.compose.material.icons.twotone.GraphicEq
 import androidx.compose.material.icons.twotone.Language
 import androidx.compose.material.icons.twotone.MusicNote
+import androidx.compose.material.icons.twotone.Notifications
 import androidx.compose.material.icons.twotone.Output
 import androidx.compose.material.icons.twotone.Tune
 import androidx.compose.material3.Icon
@@ -41,10 +42,12 @@ import androidx.compose.ui.res.stringResource
 import com.fiepi.media.app.R
 import com.fiepi.media.app.ui.screen.settings.components.PreferencesGroup
 import com.fiepi.media.app.ui.screen.settings.components.PreferencesItem
+import com.fiepi.media.app.ui.screen.settings.components.SingleChoicePreferencesItem
 import com.fiepi.media.app.ui.screen.settings.components.SliderPreferencesItem
 import com.fiepi.media.app.ui.screen.settings.components.SwitchPreferencesItem
 import com.fiepi.media.app.ui.screen.settings.model.SettingsSubPage
 import com.fiepi.media.domain.model.assets.Language
+import com.fiepi.media.domain.model.preferences.AudioFocusBehavior
 import com.fiepi.media.domain.model.preferences.AudioOptions
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
@@ -119,6 +122,30 @@ fun AudioPageContent(
                             icon = {
                                 Icon(
                                     imageVector = Icons.TwoTone.MusicNote,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    },
+                    { shapes ->
+                        SingleChoicePreferencesItem(
+                            shapes = shapes,
+                            title = stringResource(R.string.settings_audio_focus_behavior),
+                            summary = stringResource(R.string.settings_audio_focus_behavior_summary),
+                            options = AudioFocusBehavior.entries,
+                            currentValue = options.audioFocusBehavior,
+                            onValueChange = { onIntent(AudioPrefsIntent.UpdateAudioFocusBehavior(it)) },
+                            enabled = options.requestAudioFocus,
+                            optionToText = { behavior ->
+                                when (behavior) {
+                                    AudioFocusBehavior.Pause -> stringResource(R.string.settings_audio_focus_behavior_pause)
+                                    AudioFocusBehavior.DoNotPause -> stringResource(R.string.settings_audio_focus_behavior_do_not_pause)
+                                    AudioFocusBehavior.PauseAndResume -> stringResource(R.string.settings_audio_focus_behavior_pause_and_resume)
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Notifications,
                                     contentDescription = null
                                 )
                             }

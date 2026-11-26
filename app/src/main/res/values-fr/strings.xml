@@ -73,6 +73,8 @@
     <string name="settings_gestures_header_tap">Commandes par appui</string>
     <string name="settings_gestures_horizontal_drag">Navigation temporelle</string>
     <string name="settings_gestures_horizontal_drag_summary">Glisser horizontalement pour avancer ou reculer dans la vidéo</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity">Sensibilité du défilement</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity_summary">Ajuste la rapidité de recherche lors du glissement horizontal</string>
     <string name="settings_gestures_vertical_drag_volume">Volume</string>
     <string name="settings_gestures_vertical_drag_volume_summary">Glisser verticalement sur le côté gauche pour régler le volume</string>
     <string name="settings_gestures_vertical_drag_brightness">Luminosité</string>
@@ -395,6 +397,11 @@
     <string name="settings_audio_header_mpv">Audio mpv</string>
     <string name="settings_audio_request_focus">Demander le focus audio</string>
     <string name="settings_audio_request_focus_summary">Mettre en pause lorsque d\'autres applications émettent du son</string>
+    <string name="settings_audio_focus_behavior">Comportement lors des interruptions</string>
+    <string name="settings_audio_focus_behavior_summary">Choisissez comment la lecture réagit aux notifications ou autres interruptions audio</string>
+    <string name="settings_audio_focus_behavior_pause">Mettre en pause</string>
+    <string name="settings_audio_focus_behavior_do_not_pause">Ne pas pauser</string>
+    <string name="settings_audio_focus_behavior_pause_and_resume">Reprendre après</string>
     <string name="settings_audio_enable_background_audio">Audio en arrière-plan</string>
     <string name="settings_audio_enable_background_audio_summary">Continuer la lecture audio lorsque l\'application est en arrière-plan</string>
     <string name="settings_audio_exo_volume">Volume du lecteur</string>

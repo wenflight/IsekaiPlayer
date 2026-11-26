@@ -73,6 +73,8 @@
     <string name="settings_gestures_header_tap">Controles por toques</string>
     <string name="settings_gestures_horizontal_drag">Búsqueda / Desplazamiento</string>
     <string name="settings_gestures_horizontal_drag_summary">Desliza horizontalmente para buscar la posición de reproducción</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity">Sensibilidad de búsqueda</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity_summary">Ajusta la velocidad de avance o retroceso al deslizar horizontalmente</string>
     <string name="settings_gestures_vertical_drag_volume">Volumen</string>
     <string name="settings_gestures_vertical_drag_volume_summary">Desliza verticalmente en la parte izquierda para ajustar el volumen</string>
     <string name="settings_gestures_vertical_drag_brightness">Brillo</string>
@@ -395,6 +397,11 @@
     <string name="settings_audio_header_mpv">Audio de mpv</string>
     <string name="settings_audio_request_focus">Solicitar foco de audio</string>
     <string name="settings_audio_request_focus_summary">Pausa la reproducción cuando otras aplicaciones emiten sonido</string>
+    <string name="settings_audio_focus_behavior">Comportamiento ante interrupciones</string>
+    <string name="settings_audio_focus_behavior_summary">Elige cómo responde la reproducción ante notificaciones u otras interrupciones de audio</string>
+    <string name="settings_audio_focus_behavior_pause">Pausar</string>
+    <string name="settings_audio_focus_behavior_do_not_pause">No pausar</string>
+    <string name="settings_audio_focus_behavior_pause_and_resume">Reanudar</string>
     <string name="settings_audio_enable_background_audio">Audio en segundo plano</string>
     <string name="settings_audio_enable_background_audio_summary">Continúa reproduciendo el audio al salir de la aplicación</string>
     <string name="settings_audio_exo_volume">Volumen del reproductor</string>

@@ -253,7 +253,7 @@ fun PlayerGestureLayer(
                                 if (isHorizontalDrag && currentDuration > 0) {
                                     if (gestureOptions.horizontalDragEnabled) {
                                         val effectiveDragX = totalX - detectionDragOffset
-                                        val sensitivity = 1.0f
+                                        val sensitivity = gestureOptions.horizontalDragSensitivity.coerceIn(0.05f, 2.0f)
                                         val deltaMs =
                                             (effectiveDragX / width * currentDuration.toFloat() * sensitivity).toLong()
                                         lastTargetTime =

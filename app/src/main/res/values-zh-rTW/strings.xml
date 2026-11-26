@@ -73,6 +73,8 @@
     <string name="settings_gestures_header_tap">點選控制</string>
     <string name="settings_gestures_horizontal_drag">進度調節</string>
     <string name="settings_gestures_horizontal_drag_summary">在螢幕水平滑動調節播放進度</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity">進度滑動靈敏度</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity_summary">調整水平滑動快轉/倒轉的靈敏度</string>
     <string name="settings_gestures_vertical_drag_volume">音量調節</string>
     <string name="settings_gestures_vertical_drag_volume_summary">在螢幕左側上下滑動調節音量</string>
     <string name="settings_gestures_vertical_drag_brightness">亮度調節</string>
@@ -394,6 +396,11 @@
     <string name="settings_audio_header_mpv">mpv 音訊</string>
     <string name="settings_audio_request_focus">請求音訊焦點</string>
     <string name="settings_audio_request_focus_summary">當其他應用程式播放音訊時暫停播放</string>
+    <string name="settings_audio_focus_behavior">音訊中斷行為</string>
+    <string name="settings_audio_focus_behavior_summary">選擇有通知或其他音訊打擾時的播放行為</string>
+    <string name="settings_audio_focus_behavior_pause">暫停</string>
+    <string name="settings_audio_focus_behavior_do_not_pause">不暫停</string>
+    <string name="settings_audio_focus_behavior_pause_and_resume">中斷後繼續</string>
     <string name="settings_audio_enable_background_audio">後臺播放</string>
     <string name="settings_audio_enable_background_audio_summary">應用程式切至後臺時繼續播放</string>
     <string name="settings_audio_exo_volume">播放器音量</string>

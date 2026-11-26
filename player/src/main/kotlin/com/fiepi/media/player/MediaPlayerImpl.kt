@@ -148,7 +148,9 @@ class MediaPlayerImpl(
     private val playlistManager = PlayerPlaylistManager()
     private val audioManager = PlayerAudioManager(
         context = context,
-        onAudioFocusLost = { pause() },
+        isPlayingProvider = { _state.value.isPlaying },
+        onAudioFocusLost = { abandonFocus -> pauseInternal(abandonAudioFocus = abandonFocus) },
+        onAudioFocusRegained = { play() },
         onSetEngineVolume = { volume -> engineManager.setVolume(volume) }
     )
     private val trackManager = PlayerTrackManager(
@@ -216,6 +218,8 @@ class MediaPlayerImpl(
                 ) {
                     updateShuffleQueueIfNeeded(forceReshuffle = true)
                 }
+
+                audioManager.updateAudioFocusBehavior(options.audioFocusBehavior)
 
                 if (options.requestAudioFocus != previousAudioFocus) {
                     audioManager.handleAudioFocusPreferenceChanged(
@@ -736,10 +740,16 @@ class MediaPlayerImpl(
     }
 
     override fun pause() {
+        pauseInternal(abandonAudioFocus = true)
+    }
+
+    private fun pauseInternal(abandonAudioFocus: Boolean) {
         _state.update { it.copy(isPlaying = false) }
         historyTracker.triggerHistorySave(playerScope)
         engineManager.pause()
-        audioManager.abandonAudioFocus()
+        if (abandonAudioFocus) {
+            audioManager.abandonAudioFocus()
+        }
     }
 
     override fun togglePlay() {

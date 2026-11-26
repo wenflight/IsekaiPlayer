@@ -73,6 +73,8 @@
     <string name="settings_gestures_header_tap">Tapping controls</string>
     <string name="settings_gestures_horizontal_drag">Seeking</string>
     <string name="settings_gestures_horizontal_drag_summary">Enable horizontal swipe to seek</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity">Seek sensitivity</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity_summary">Adjust how fast horizontal dragging seeks playback</string>
     <string name="settings_gestures_vertical_drag_volume">Volume</string>
     <string name="settings_gestures_vertical_drag_volume_summary">Enable vertical swipe on the left side to adjust volume</string>
     <string name="settings_gestures_vertical_drag_brightness">Brightness</string>
@@ -395,6 +397,11 @@
     <string name="settings_audio_header_mpv">mpv Audio</string>
     <string name="settings_audio_request_focus">Request audio focus</string>
     <string name="settings_audio_request_focus_summary">Pause playback when other apps play audio</string>
+    <string name="settings_audio_focus_behavior">Audio interruption behavior</string>
+    <string name="settings_audio_focus_behavior_summary">Choose how playback responds to notifications or other audio interruptions</string>
+    <string name="settings_audio_focus_behavior_pause">Pause</string>
+    <string name="settings_audio_focus_behavior_do_not_pause">Don\'t pause</string>
+    <string name="settings_audio_focus_behavior_pause_and_resume">Resume after</string>
     <string name="settings_audio_enable_background_audio">Background audio</string>
     <string name="settings_audio_enable_background_audio_summary">Continue playing audio when the app is in the background</string>
     <string name="settings_audio_exo_volume">Player volume</string>

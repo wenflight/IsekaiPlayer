@@ -59,6 +59,8 @@ data class PlaybackOptions(
     val loopMode: LoopMode = LoopMode.None,
     @SerialName("request_audio_focus")
     val requestAudioFocus: Boolean = true,
+    @SerialName("audio_focus_behavior")
+    val audioFocusBehavior: AudioFocusBehavior = AudioFocusBehavior.PauseAndResume,
     @SerialName("preferred_audio_languages")
     val preferredAudioLanguages: List<String> = emptyList(),
     @SerialName("preferred_subtitle_languages")

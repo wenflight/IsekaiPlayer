@@ -25,6 +25,8 @@ import kotlinx.serialization.Serializable
 data class GestureOptions(
     @SerialName("horizontal_drag_enabled")
     val horizontalDragEnabled: Boolean = true,
+    @SerialName("horizontal_drag_sensitivity")
+    val horizontalDragSensitivity: Float = 0.5f,
     @SerialName("vertical_drag_volume_enabled")
     val verticalDragVolumeEnabled: Boolean = true,
     @SerialName("vertical_drag_brightness_enabled")

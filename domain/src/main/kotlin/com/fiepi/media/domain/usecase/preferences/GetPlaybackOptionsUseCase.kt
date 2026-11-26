@@ -43,6 +43,7 @@ class GetPlaybackOptionsUseCase(
             resumePlayback = player.resumePlayback,
             loopMode = player.loopMode,
             requestAudioFocus = audio.requestAudioFocus,
+            audioFocusBehavior = audio.audioFocusBehavior,
             preferredAudioLanguages = audio.preferredAudioLanguages,
             preferredSubtitleLanguages = subtitle.preferredSubtitleLanguages,
             subtitleFallback = subtitle.subtitleFallback,

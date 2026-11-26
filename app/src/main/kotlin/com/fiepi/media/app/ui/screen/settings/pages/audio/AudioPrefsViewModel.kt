@@ -61,6 +61,10 @@ class AudioPrefsViewModel(
                     useCases.updateAudioOptions(current.copy(requestAudioFocus = intent.enabled))
                 }
 
+                is AudioPrefsIntent.UpdateAudioFocusBehavior -> {
+                    useCases.updateAudioOptions(current.copy(audioFocusBehavior = intent.behavior))
+                }
+
                 is AudioPrefsIntent.ToggleBackgroundAudio -> {
                     useCases.updateAudioOptions(current.copy(enableBackgroundAudio = intent.enabled))
                 }

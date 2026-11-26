@@ -113,6 +113,12 @@ class SettingsSearchViewModel(context: Context) : ViewModel() {
             SettingsNavKey.Category(SettingsCategory.Gestures.ordinal)
         ),
         SearchablePreference(
+            R.string.settings_gestures_horizontal_drag_sensitivity,
+            R.string.settings_gestures_horizontal_drag_sensitivity_summary,
+            SettingsCategory.Gestures,
+            SettingsNavKey.Category(SettingsCategory.Gestures.ordinal)
+        ),
+        SearchablePreference(
             R.string.settings_gestures_vertical_drag_volume,
             R.string.settings_gestures_vertical_drag_volume_summary,
             SettingsCategory.Gestures,
@@ -217,6 +223,18 @@ class SettingsSearchViewModel(context: Context) : ViewModel() {
             null,
             SettingsCategory.Audio,
             SettingsNavKey.AudioSubPage(SettingsSubPage.Audio.PREFERRED_LANGUAGE)
+        ),
+        SearchablePreference(
+            R.string.settings_audio_request_focus,
+            R.string.settings_audio_request_focus_summary,
+            SettingsCategory.Audio,
+            SettingsNavKey.Category(SettingsCategory.Audio.ordinal)
+        ),
+        SearchablePreference(
+            R.string.settings_audio_focus_behavior,
+            R.string.settings_audio_focus_behavior_summary,
+            SettingsCategory.Audio,
+            SettingsNavKey.Category(SettingsCategory.Audio.ordinal)
         ),
 
         // Subtitle

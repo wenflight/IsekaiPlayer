@@ -22,6 +22,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import com.fiepi.media.domain.model.preferences.AudioFocusBehavior
 import com.fiepi.media.domain.player.model.PlayerVolumeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -29,25 +30,27 @@ import kotlin.math.roundToInt
 
 /**
  * Handles Audio Focus requests/abandonment and precise System Volume + Software Gain mapping algorithms.
- * Uses callback [onSetEngineVolume] to adjust engine volume without directly referencing engine instances.
+ * Uses callbacks to control playback and engine volume without directly referencing engine instances.
  */
 internal class PlayerAudioManager(
     context: Context,
-    private val onAudioFocusLost: () -> Unit,
+    private val isPlayingProvider: () -> Boolean,
+    private val onAudioFocusLost: (abandonFocus: Boolean) -> Unit,
+    private val onAudioFocusRegained: () -> Unit,
     private val onSetEngineVolume: (volume: Double) -> Unit
 ) {
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     val systemMaxVolume: Int = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
+    @Volatile
+    private var audioFocusBehavior: AudioFocusBehavior = AudioFocusBehavior.PauseAndResume
+
+    @Volatile
+    private var pausedByTransientFocusLoss: Boolean = false
+
     private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
-        when (focusChange) {
-            AudioManager.AUDIOFOCUS_LOSS,
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                onAudioFocusLost()
-            }
-        }
+        handleAudioFocusChange(focusChange)
     }
 
     private val audioFocusRequest by lazy {
@@ -61,13 +64,63 @@ internal class PlayerAudioManager(
         reqBuilder.build()
     }
 
+    fun updateAudioFocusBehavior(behavior: AudioFocusBehavior) {
+        audioFocusBehavior = behavior
+        if (behavior != AudioFocusBehavior.PauseAndResume) {
+            pausedByTransientFocusLoss = false
+        }
+    }
+
+    internal fun handleAudioFocusChange(focusChange: Int) {
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                pausedByTransientFocusLoss = false
+                when (audioFocusBehavior) {
+                    AudioFocusBehavior.Pause,
+                    AudioFocusBehavior.PauseAndResume -> onAudioFocusLost(true)
+
+                    AudioFocusBehavior.DoNotPause -> Unit
+                }
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                when (audioFocusBehavior) {
+                    AudioFocusBehavior.Pause -> {
+                        pausedByTransientFocusLoss = false
+                        onAudioFocusLost(true)
+                    }
+
+                    AudioFocusBehavior.DoNotPause -> Unit
+
+                    AudioFocusBehavior.PauseAndResume -> {
+                        if (isPlayingProvider()) {
+                            pausedByTransientFocusLoss = true
+                            // Keep audio focus registration active so the system delivers AUDIOFOCUS_GAIN later
+                            onAudioFocusLost(false)
+                        }
+                    }
+                }
+            }
+
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                if (audioFocusBehavior == AudioFocusBehavior.PauseAndResume && pausedByTransientFocusLoss) {
+                    pausedByTransientFocusLoss = false
+                    onAudioFocusRegained()
+                }
+            }
+        }
+    }
+
     fun requestAudioFocus(enabledPreference: Boolean): Boolean {
+        pausedByTransientFocusLoss = false
         if (!enabledPreference) return true
         val result = audioManager.requestAudioFocus(audioFocusRequest)
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
     fun abandonAudioFocus() {
+        pausedByTransientFocusLoss = false
         audioManager.abandonAudioFocusRequest(audioFocusRequest)
     }
 
@@ -88,6 +141,8 @@ internal class PlayerAudioManager(
             } else {
                 abandonAudioFocus()
             }
+        } else if (!enabled) {
+            abandonAudioFocus()
         }
     }
 

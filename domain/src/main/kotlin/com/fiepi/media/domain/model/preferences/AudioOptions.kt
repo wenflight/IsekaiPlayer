@@ -22,12 +22,29 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
+ * Defines how playback responds when audio focus is interrupted by notifications or other apps.
+ */
+@Serializable
+enum class AudioFocusBehavior {
+    @SerialName("pause")
+    Pause,
+
+    @SerialName("do_not_pause")
+    DoNotPause,
+
+    @SerialName("pause_and_resume")
+    PauseAndResume
+}
+
+/**
  * Audio-related preference settings
  */
 @Serializable
 data class AudioOptions(
     @SerialName("request_audio_focus")
     val requestAudioFocus: Boolean = true,
+    @SerialName("audio_focus_behavior")
+    val audioFocusBehavior: AudioFocusBehavior = AudioFocusBehavior.PauseAndResume,
     @SerialName("enable_background_audio")
     val enableBackgroundAudio: Boolean = false,
     @SerialName("preferred_audio_languages")

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.twotone.Speed
 import androidx.compose.material.icons.twotone.SwapHoriz
 import androidx.compose.material.icons.twotone.Swipe
 import androidx.compose.material.icons.twotone.TouchApp
+import androidx.compose.material.icons.twotone.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -97,6 +98,42 @@ fun GesturesPageContent(
                         icon = {
                             Icon(
                                 imageVector = Icons.TwoTone.Swipe,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                },
+                { shapes ->
+                    SliderPreferencesItem(
+                        title = stringResource(R.string.settings_gestures_horizontal_drag_sensitivity),
+                        summary = stringResource(R.string.settings_gestures_horizontal_drag_sensitivity_summary),
+                        value = (options.horizontalDragSensitivity * 100f).coerceIn(5f, 200f),
+                        onValueChange = {
+                            onIntent(
+                                GesturesPrefsIntent.UpdateGestureOptions(
+                                    options.copy(
+                                        horizontalDragSensitivity = it.roundToInt().coerceIn(5, 200) / 100f
+                                    )
+                                )
+                            )
+                        },
+                        range = 5f..200f,
+                        steps = 38,
+                        valueFormat = "%.0f%%",
+                        enabled = options.horizontalDragEnabled,
+                        shapes = shapes,
+                        onReset = {
+                            onIntent(
+                                GesturesPrefsIntent.UpdateGestureOptions(
+                                    options.copy(
+                                        horizontalDragSensitivity = 0.5f
+                                    )
+                                )
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.TwoTone.Tune,
                                 contentDescription = null
                             )
                         }

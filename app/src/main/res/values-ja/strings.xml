@@ -73,6 +73,8 @@
     <string name="settings_gestures_header_tap">タップ操作</string>
     <string name="settings_gestures_horizontal_drag">シーク操作</string>
     <string name="settings_gestures_horizontal_drag_summary">画面を左右にスライドして再生位置を調整</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity">シーク感度</string>
+    <string name="settings_gestures_horizontal_drag_sensitivity_summary">水平スワイプによるシークの感度を調整します</string>
     <string name="settings_gestures_vertical_drag_volume">音量調整</string>
     <string name="settings_gestures_vertical_drag_volume_summary">画面左側を上下にスライドして音量を調整</string>
     <string name="settings_gestures_vertical_drag_brightness">明るさ調整</string>
@@ -395,6 +397,11 @@
     <string name="settings_audio_header_mpv">mpv オーディオ</string>
     <string name="settings_audio_request_focus">オーディオフォーカスを要求</string>
     <string name="settings_audio_request_focus_summary">他のアプリが音声を出力した際に再生を一時停止します</string>
+    <string name="settings_audio_focus_behavior">割り込み時の動作</string>
+    <string name="settings_audio_focus_behavior_summary">通知や他アプリの音声割り込み時の再生動作を選択します</string>
+    <string name="settings_audio_focus_behavior_pause">一時停止</string>
+    <string name="settings_audio_focus_behavior_do_not_pause">停止しない</string>
+    <string name="settings_audio_focus_behavior_pause_and_resume">終了後に再開</string>
     <string name="settings_audio_enable_background_audio">バックグラウンド再生</string>
     <string name="settings_audio_enable_background_audio_summary">アプリがバックグラウンドに移行しても音声を再生し続けます</string>
     <string name="settings_audio_exo_volume">プレーヤー音量</string>

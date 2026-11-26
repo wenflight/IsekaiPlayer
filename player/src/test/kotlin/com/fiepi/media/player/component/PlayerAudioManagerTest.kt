@@ -20,6 +20,7 @@ package com.fiepi.media.player.component
 
 import android.content.Context
 import android.media.AudioManager
+import com.fiepi.media.domain.model.preferences.AudioFocusBehavior
 import com.fiepi.media.domain.player.PlayerEngine
 import io.mockk.every
 import io.mockk.mockk
@@ -38,6 +39,11 @@ class PlayerAudioManagerTest {
     private val mockEngine = mockk<PlayerEngine>(relaxed = true)
     private val testScope = TestScope(UnconfinedTestDispatcher())
 
+    private var isPlaying = true
+    private var focusLostCount = 0
+    private var lastAbandonFocus: Boolean? = null
+    private var focusRegainedCount = 0
+
     private lateinit var audioManagerComponent: PlayerAudioManager
 
     @Before
@@ -46,9 +52,23 @@ class PlayerAudioManagerTest {
         every { mockAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) } returns 15
         every { mockAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC) } returns 10
 
+        isPlaying = true
+        focusLostCount = 0
+        lastAbandonFocus = null
+        focusRegainedCount = 0
+
         audioManagerComponent = PlayerAudioManager(
             context = mockContext,
-            onAudioFocusLost = {},
+            isPlayingProvider = { isPlaying },
+            onAudioFocusLost = { abandonFocus ->
+                focusLostCount++
+                lastAbandonFocus = abandonFocus
+                isPlaying = false
+            },
+            onAudioFocusRegained = {
+                focusRegainedCount++
+                isPlaying = true
+            },
             onSetEngineVolume = { mockEngine.setVolume(it) }
         )
     }
@@ -126,5 +146,55 @@ class PlayerAudioManagerTest {
         )
 
         assertEquals(false, focusDeniedCalled)
+    }
+
+    @Test
+    fun `PauseAndResume pauses without abandoning focus on transient loss and resumes on gain`() {
+        audioManagerComponent.updateAudioFocusBehavior(AudioFocusBehavior.PauseAndResume)
+
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+        assertEquals(1, focusLostCount)
+        assertEquals(false, lastAbandonFocus)
+        assertEquals(0, focusRegainedCount)
+
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+        assertEquals(1, focusRegainedCount)
+        assertEquals(true, isPlaying)
+    }
+
+    @Test
+    fun `PauseAndResume does not auto resume if player was already paused before interruption`() {
+        audioManagerComponent.updateAudioFocusBehavior(AudioFocusBehavior.PauseAndResume)
+        isPlaying = false
+
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+
+        assertEquals(0, focusLostCount)
+        assertEquals(0, focusRegainedCount)
+    }
+
+    @Test
+    fun `Pause pauses and abandons focus without auto resume on gain`() {
+        audioManagerComponent.updateAudioFocusBehavior(AudioFocusBehavior.Pause)
+
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        assertEquals(1, focusLostCount)
+        assertEquals(true, lastAbandonFocus)
+
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+        assertEquals(0, focusRegainedCount)
+    }
+
+    @Test
+    fun `DoNotPause ignores all audio focus loss events`() {
+        audioManagerComponent.updateAudioFocusBehavior(AudioFocusBehavior.DoNotPause)
+
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        audioManagerComponent.handleAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+
+        assertEquals(0, focusLostCount)
+        assertEquals(true, isPlaying)
     }
 }
