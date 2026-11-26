@@ -65,7 +65,61 @@ internal object MediaFileSorter {
     }
 
     private fun compareByName(item1: MediaFile, item2: MediaFile): Int {
-        val cmp = item1.name.compareTo(item2.name, ignoreCase = true)
-        return if (cmp != 0) cmp else item1.name.compareTo(item2.name)
+        return compareNatural(item1.name, item2.name)
+    }
+
+    private fun compareNatural(a: String, b: String): Int {
+        var i = 0
+        var j = 0
+        val lenA = a.length
+        val lenB = b.length
+
+        while (i < lenA && j < lenB) {
+            val ca = a[i]
+            val cb = b[j]
+
+            if (ca in '0'..'9' && cb in '0'..'9') {
+                // Skip leading zeros for numeric value comparison
+                var startA = i
+                while (startA < lenA && a[startA] == '0') startA++
+                var endA = startA
+                while (endA < lenA && a[endA] in '0'..'9') endA++
+
+                var startB = j
+                while (startB < lenB && b[startB] == '0') startB++
+                var endB = startB
+                while (endB < lenB && b[endB] in '0'..'9') endB++
+
+                val sigLenA = endA - startA
+                val sigLenB = endB - startB
+                if (sigLenA != sigLenB) {
+                    return sigLenA.compareTo(sigLenB)
+                }
+
+                for (k in 0 until sigLenA) {
+                    val da = a[startA + k]
+                    val db = b[startB + k]
+                    if (da != db) {
+                        return da.compareTo(db)
+                    }
+                }
+
+                i = endA
+                j = endB
+            } else {
+                val la = ca.lowercaseChar()
+                val lb = cb.lowercaseChar()
+                if (la != lb) {
+                    return la.compareTo(lb)
+                }
+                i++
+                j++
+            }
+        }
+
+        val lenCmp = (lenA - i).compareTo(lenB - j)
+        if (lenCmp != 0) return lenCmp
+
+        return a.compareTo(b)
     }
 }

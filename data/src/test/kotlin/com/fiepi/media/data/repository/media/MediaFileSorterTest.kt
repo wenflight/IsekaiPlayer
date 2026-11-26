@@ -145,4 +145,62 @@ class MediaFileSorterTest {
         // Sorted strictly by date: folderA (1000L), videoSmall (2000L), folderB (3000L), videoLarge (4000L)
         assertEquals(listOf(folderA, videoSmall, folderB, videoLarge), sorted)
     }
+
+    @Test
+    fun testSortByName_NaturalOrder_Episodes() {
+        val names = listOf(
+            "致不灭的你 · 第3季 · 第10集 · 人类的模样.mkv",
+            "致不灭的你 · 第3季 · 第22集 · 给不死.mkv",
+            "致不灭的你 · 第3季 · 第4集 · 消失的人.mkv",
+            "致不灭的你 · 第3季 · 第9集 · 拒绝的生命.mkv",
+            "小黄人大眼萌3.mkv",
+        )
+        val items = names.mapIndexed { idx, name ->
+            MediaFile.Video(
+                id = idx.toString(),
+                path = "/$name",
+                name = name,
+                sourceType = SourceType.Local,
+            )
+        }
+        val options = MediaOptions(
+            sortType = SortType.Name,
+            sortOrder = SortOrder.Ascending,
+        )
+
+        val sortedNames = MediaFileSorter.sort(items, options).map { it.name }
+        assertEquals(
+            listOf(
+                "小黄人大眼萌3.mkv",
+                "致不灭的你 · 第3季 · 第4集 · 消失的人.mkv",
+                "致不灭的你 · 第3季 · 第9集 · 拒绝的生命.mkv",
+                "致不灭的你 · 第3季 · 第10集 · 人类的模样.mkv",
+                "致不灭的你 · 第3季 · 第22集 · 给不死.mkv",
+            ),
+            sortedNames,
+        )
+    }
+
+    @Test
+    fun testSortByName_NaturalOrder_LeadingZerosAndLargeNumbers() {
+        val names = listOf("ep10.mkv", "ep02.mkv", "ep1.mkv", "ep01.mkv", "ep99999999999999999999999.mkv")
+        val items = names.mapIndexed { idx, name ->
+            MediaFile.Video(
+                id = idx.toString(),
+                path = "/$name",
+                name = name,
+                sourceType = SourceType.Local,
+            )
+        }
+        val options = MediaOptions(
+            sortType = SortType.Name,
+            sortOrder = SortOrder.Ascending,
+        )
+
+        val sortedNames = MediaFileSorter.sort(items, options).map { it.name }
+        assertEquals(
+            listOf("ep01.mkv", "ep1.mkv", "ep02.mkv", "ep10.mkv", "ep99999999999999999999999.mkv"),
+            sortedNames,
+        )
+    }
 }
