@@ -7,6 +7,10 @@ on:
         description: 'Sync upstream onlymash/IsekaiPlayer master and rebase this branch before building'
         type: boolean
         default: true
+      publish_release:
+        description: 'Publish a GitHub Release with the built APK'
+        type: boolean
+        default: false
       abi:
         description: 'Target Android ABI'
         type: choice
@@ -17,49 +21,116 @@ on:
           - 'all'
   push:
     branches: [ my-custom ]
-  # Uncomment below if you want to auto-check upstream every week (Mondays 02:00 UTC)
-  # schedule:
-  #   - cron: '0 2 * * 1'
+  schedule:
+    # Check once a day at 02:00 UTC (10:00 Beijing Time)
+    - cron: '0 2 * * *'
 
 permissions:
   contents: write
 
 jobs:
+  prepare:
+    name: Check Upstream & Sync
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.sync.outputs.should_build }}
+      release_tag: ${{ steps.sync.outputs.release_tag }}
+      upstream_tag: ${{ steps.sync.outputs.upstream_tag }}
+      sha: ${{ steps.sync.outputs.sha }}
+
+    steps:
+      - name: Checkout my-custom
+        uses: actions/checkout@v4
+        with:
+          ref: my-custom
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check upstream release and rebase
+        id: sync
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/onlymash/IsekaiPlayer.git || git remote set-url upstream https://github.com/onlymash/IsekaiPlayer.git
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            UPSTREAM_TAG=$(gh api repos/onlymash/IsekaiPlayer/releases/latest --jq '.tag_name')
+            if [ -z "$UPSTREAM_TAG" ]; then
+              echo "::error::Failed to fetch latest upstream release tag."
+              exit 1
+            fi
+
+            VER="${UPSTREAM_TAG#v}"
+            CUSTOM_TAG="v${VER}-custom.1"
+            echo "Latest upstream release: $UPSTREAM_TAG (custom tag: $CUSTOM_TAG)"
+
+            if gh release view "$CUSTOM_TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+              echo "Release $CUSTOM_TAG already exists. Skipping build."
+              echo "should_build=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            git fetch upstream "refs/tags/${UPSTREAM_TAG}:refs/tags/${UPSTREAM_TAG}"
+            BEFORE_SHA=$(git rev-parse HEAD)
+            if ! git rebase "$UPSTREAM_TAG"; then
+              echo "::error::Rebase conflict detected against upstream tag $UPSTREAM_TAG. Please resolve conflicts locally and push again."
+              git rebase --abort || true
+              exit 1
+            fi
+
+            AFTER_SHA=$(git rev-parse HEAD)
+            if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
+              git push --force-with-lease origin HEAD:my-custom
+              echo "Synced and rebased onto upstream release $UPSTREAM_TAG."
+            fi
+
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "release_tag=$CUSTOM_TAG" >> "$GITHUB_OUTPUT"
+            echo "upstream_tag=$UPSTREAM_TAG" >> "$GITHUB_OUTPUT"
+            echo "sha=$AFTER_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.sync_upstream }}" = "true" ]; then
+            git fetch upstream master
+            BEFORE_SHA=$(git rev-parse HEAD)
+            if ! git rebase upstream/master; then
+              echo "::error::Rebase conflict detected against upstream/master. Please resolve conflicts locally and push again."
+              git rebase --abort || true
+              exit 1
+            fi
+            AFTER_SHA=$(git rev-parse HEAD)
+            if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
+              git push --force-with-lease origin HEAD:my-custom
+              echo "Synced and rebased onto latest upstream/master."
+            else
+              echo "Already up to date with upstream/master."
+            fi
+          fi
+
+          VER=$(grep -E '^app-versionName\s*=' gradle/config.versions.toml | cut -d'"' -f2)
+          CUSTOM_TAG="v${VER}-custom.${{ github.run_number }}"
+          echo "should_build=true" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$CUSTOM_TAG" >> "$GITHUB_OUTPUT"
+          echo "upstream_tag=$VER" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
   build-release:
-    name: Sync & Build Release APK
+    name: Build & Publish Release APK
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ needs.prepare.outputs.sha }}
           submodules: recursive
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Sync upstream and rebase custom branch
-        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.sync_upstream) }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git remote add upstream https://github.com/onlymash/IsekaiPlayer.git || git remote set-url upstream https://github.com/onlymash/IsekaiPlayer.git
-          git fetch upstream master
-
-          BEFORE_SHA=$(git rev-parse HEAD)
-          if ! git rebase upstream/master; then
-            echo "::error::Rebase conflict detected against upstream/master. Please resolve conflicts locally or in Antigravity and push again."
-            git rebase --abort || true
-            exit 1
-          fi
-
-          AFTER_SHA=$(git rev-parse HEAD)
-          if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
-            git push --force-with-lease origin "HEAD:${GITHUB_REF_NAME}"
-            echo "Synced and rebased onto latest upstream/master."
-          else
-            echo "Already up to date with upstream/master."
-          fi
 
       - name: Read toolchain versions from config.versions.toml
         id: versions
@@ -156,3 +227,18 @@ jobs:
           name: IsekaiPlayer-release-${{ inputs.abi || 'arm64' }}
           path: app/build/outputs/apk/release/*.apk
           retention-days: 30
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.prepare.outputs.release_tag }}"
+          UPSTREAM_VER="${{ needs.prepare.outputs.upstream_tag }}"
+          ABI="${{ inputs.abi || 'arm64' }}"
+          NOTES=$(printf 'Auto-synced with upstream release %s and built with custom features:\n- Seek gesture sensitivity setting\n- Audio interruption behavior: pause / do not pause / resume after interruption' "$UPSTREAM_VER")
+          gh release create "$TAG" app/build/outputs/apk/release/*.apk \
+            --repo "${{ github.repository }}" \
+            --target "${{ needs.prepare.outputs.sha }}" \
+            --title "IsekaiPlayer ${UPSTREAM_VER} Custom (${ABI})" \
+            --notes "$NOTES"
